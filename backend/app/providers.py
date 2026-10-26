@@ -12,7 +12,7 @@ import httpx
 from .errors import AppError
 
 
-HEADER_TIMEOUT = 10
+HEADER_TIMEOUT = 60
 
 
 @dataclass(frozen=True)
@@ -28,11 +28,13 @@ class GenerateInput:
 
 class Provider:
     def __init__(self, kind: Literal["ollama", "gemini", "llamacpp"], base_url: str = "",
-                 api_key: str = "", client: httpx.AsyncClient | None = None):
+                 api_key: str = "", client: httpx.AsyncClient | None = None,
+                 header_timeout: float | None = None):
         self.id = kind
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.client = client
+        self.header_timeout = HEADER_TIMEOUT if header_timeout is None else header_timeout
         if kind != "gemini":
             url = urlparse(base_url)
             if url.scheme != "http" or url.hostname not in {
@@ -90,7 +92,7 @@ class Provider:
         try:
             response = await asyncio.wait_for(
                 client.send(client.build_request("POST", url, json=payload, headers=headers), stream=True),
-                HEADER_TIMEOUT)
+                self.header_timeout)
             if response.status_code >= 400:
                 code = {401: "PROVIDER_AUTH", 403: "PROVIDER_AUTH", 404: "MODEL_MISSING",
                         429: "RATE_LIMITED"}.get(response.status_code, "UNAVAILABLE")

@@ -75,3 +75,19 @@ async def test_headers_have_a_separate_deadline(monkeypatch):
         with pytest.raises(AppError, match="TIMEOUT"):
             _ = [e async for e in Provider("ollama", "http://localhost:11434", client=client).generate(
                 GenerateInput([{"role": "user", "content": "안녕"}], "test"))]
+
+
+async def test_cold_model_headers_can_use_configured_first_response_budget(monkeypatch):
+    monkeypatch.setattr("app.providers.HEADER_TIMEOUT", .001)
+
+    async def loading_model(request):
+        await asyncio.sleep(.02)
+        return httpx.Response(200, text=json.dumps({
+            "message": {"content": "문이 열렸다."}, "done": True, "done_reason": "stop"
+        }))
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(loading_model)) as client:
+        events = [e async for e in Provider("ollama", "http://localhost:11434", client=client,
+                                            header_timeout=1).generate(
+            GenerateInput([{"role": "user", "content": "안녕"}], "test"))]
+    assert any(e.get("text") == "문이 열렸다." for e in events)
