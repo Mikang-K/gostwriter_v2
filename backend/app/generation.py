@@ -26,10 +26,12 @@ class Generations:
 
     def _provider(self, kind):
         if kind == "ollama":
-            return Provider("ollama", self.settings.ollama_base_url), self.settings.ollama_model
+            return Provider("ollama", self.settings.ollama_base_url,
+                            header_timeout=self.settings.first_token_timeout), self.settings.ollama_model
         if not (self.settings.enable_cloud and self.settings.gemini_api_key and self.settings.gemini_model):
             raise AppError("CLOUD_NOT_CONFIGURED", 503)
-        return Provider("gemini", api_key=self.settings.gemini_api_key), self.settings.gemini_model
+        return Provider("gemini", api_key=self.settings.gemini_api_key,
+                        header_timeout=self.settings.first_token_timeout), self.settings.gemini_model
 
     def targets(self, request):
         primary = self.factory(request.provider)
