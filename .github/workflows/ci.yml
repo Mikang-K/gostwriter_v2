@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-bookworm
+        env:
+          POSTGRES_USER: ghostwriter
+          POSTGRES_PASSWORD: ci-database-password
+          POSTGRES_DB: ghostwriter_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ghostwriter -d ghostwriter_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      TEST_DATABASE_URL: postgresql://ghostwriter:ci-database-password@127.0.0.1:5432/ghostwriter_test
+      PYTHONPATH: backend
+      NEXT_TELEMETRY_DISABLED: "1"
+      ENABLE_CLOUD: "false"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Verify integration direction
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          SOURCE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          TARGET_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import os
+          if os.environ['BASE_BRANCH'] == 'main':
+              assert os.environ['HEAD_BRANCH'] == 'develop', 'Release PRs must come from develop'
+              assert os.environ['SOURCE_REPOSITORY'] == os.environ['TARGET_REPOSITORY'], 'Release PRs must use this repository'
+          PY
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: "0.13.3"
+          python-version: "3.13"
+          enable-cache: true
+      - run: npm ci
+      - run: uv sync --project backend --locked
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: uv run --project backend ruff check backend scripts/model-smoke.py
+      - run: npm run test:integration
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare isolated browser test settings
+        run: |
+          uv run --project backend python - <<'PY'
+          import json, os, secrets
+          from pathlib import Path
+          Path('.cache').mkdir(exist_ok=True)
+          Path('.cache/development-db.json').write_text(json.dumps({
+              'testDatabaseUrl': os.environ['TEST_DATABASE_URL'],
+              'appPassword': secrets.token_urlsafe(24),
+          }), encoding='utf8')
+          PY
+      - run: npm run test:e2e

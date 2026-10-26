@@ -1,5 +1,7 @@
 # Ghostwriter v2 Implementation Plan
 
+> **2026-10-26 구조 변경:** 사용자는 Next.js 화면 + Python FastAPI + PostgreSQL을 확정했다. [ADR 0001](../../adr/0001-runtime-and-storage.md), [변경 구현 지침](../../backend-implementation.md), [현재 실행 방법](../../../README.md)이 아래 원계획의 Node API·Supabase·TypeScript Provider·pgTAP·단일 컨테이너 지침을 대체한다. 현재 실제 GPU는 RTX 4060 Laptop GPU 8GiB이며 원계획의 데스크톱 하드웨어는 과거 가정이다. 아래 상세 작업·인수 조건은 추적을 위해 보존하며 전체 완료를 선언하지 않는다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 8GB VRAM 환경에서 소설 생성·이어쓰기·중단·복구·Story Memory·운영 지표를 검증할 수 있는 Local-first v2를 구현한다.

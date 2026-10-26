@@ -1,0 +1,58 @@
+{
+  "coldRuns": 1,
+  "warmRuns": 5,
+  "generation": {
+    "maxOutputTokens": 512,
+    "temperature": 0.7,
+    "contextWindow": 8192,
+    "seed": 42,
+    "timeoutMs": 120000
+  },
+  "candidates": [
+    {
+      "id": "gemma-1b-q4",
+      "provider": "ollama",
+      "model": "gemma3:1b-it-q4_K_M",
+      "artifact": {
+        "ggufSha256": null,
+        "quantization": "Q4_K_M",
+        "chatTemplateSha256": null,
+        "runtimeVersion": null
+      }
+    },
+    {
+      "id": "gemma-4b-q4",
+      "provider": "ollama",
+      "model": "gemma3:4b-it-q4_K_M",
+      "artifact": {
+        "ggufSha256": null,
+        "quantization": "Q4_K_M",
+        "chatTemplateSha256": null,
+        "runtimeVersion": null
+      }
+    },
+    {
+      "id": "gemma-4b-q8",
+      "provider": "ollama",
+      "model": "gemma3:4b-it-q8_0",
+      "optional": true,
+      "artifact": {
+        "ggufSha256": null,
+        "quantization": "Q8_0",
+        "chatTemplateSha256": null,
+        "runtimeVersion": null
+      }
+    },
+    {
+      "id": "cloud-reference",
+      "provider": "gemini",
+      "modelEnv": "GEMINI_MODEL",
+      "artifact": {
+        "ggufSha256": null,
+        "quantization": null,
+        "chatTemplateSha256": null,
+        "runtimeVersion": null
+      }
+    }
+  ]
+}
