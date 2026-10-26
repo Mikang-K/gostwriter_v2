@@ -1,5 +1,7 @@
 # Ghostwriter v2 Benchmark Implementation Plan
 
+> **2026-10-26 실행 구조 변경:** 실제 비교 CLI는 `backend/app/benchmark.py`이며 앱의 Python Provider와 지표 계산을 재사용한다. [현재 비교 실행 절차](../../benchmarks.md)와 [변경 구현 지침](../../backend-implementation.md)이 아래 TypeScript 파일·tsx 실행 지침을 대체한다. 실제 GPU는 RTX 4060 Laptop GPU 8GiB다. Q4 1b/4b 모델 준비와 실제 Cloud·수동 blind 품질 평가 완료를 구별하며, 아래 세부 작업과 평가 조건은 추적용 원문으로 보존한다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 동일한 한국어 소설 입력으로 로컬 Gemma 후보 2~3개와 Cloud 기준 모델 1개의 속도·메모리·품질을 재현 가능하게 비교하고, 측정 근거가 있는 모델 선택 기록을 만든다.

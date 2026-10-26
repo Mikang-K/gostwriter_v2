@@ -1,5 +1,7 @@
 # Ghostwriter v2 구현 체크리스트
 
+> **2026-10-26 구조 변경 및 상태 안내:** Next.js 화면 + Python FastAPI + PostgreSQL을 사용한다. [ADR 0001](../../adr/0001-runtime-and-storage.md), [변경 구현 지침](../../backend-implementation.md), [실행 문서](../../../README.md)가 아래 Node API·Supabase·pgTAP 관련 실행 가정을 대체한다. 현재 구현과 개별 검증은 진행 중이며 아래 원계획의 상세 작업·완료 표시는 보존한다. 실제 PostgreSQL 테스트, 모의 HTTP 테스트, 실제 모델·브라우저·Docker·Cloud·수동 품질 검증은 서로 대체하지 않으며 전체 계획 완료로 표시하지 않는다.
+
 작성일: 2026-10-26. 이 문서는 구현 진행과 검증 증거를 관리한다.
 
 - 기준: [기술 방향서](../../../ghostwriter_v2_technical_direction.md)
@@ -8,18 +10,18 @@
 
 ## 현재 상태와 기록 원칙
 
-현재 산출물은 계획 문서다. 애플리케이션 구현, 자동 테스트, 모델 호출, 하드웨어 측정, Docker 실행을 완료했다는 뜻이 아니다.
+현재 애플리케이션과 검증 코드를 구현했으며 실제 PostgreSQL·로컬 모델·Chromium 검증을 실행했다. [최신 검증 기록](../../implementation-results.md)이 현재 상태의 기준이다. 전체 릴리스 조건의 완료를 뜻하지 않는다.
 
 `[x]`는 해당 항목의 증거가 확보된 경우에만 사용한다. 계획 검토의 완료와 구현 작업의 완료는 구분한다. 작업을 완료하면 증거 칸에 실행일, commit, 환경, 명령, 결과 파일을 기록한다. 실행하지 못한 항목은 사유와 남은 조건을 적고 미완료로 유지한다.
 
-별도 Supabase 프로젝트와 Next.js Node API는 구현 계획의 기본안이다. 방향서가 이미 확정한 기술 선택으로 표시하지 않는다. Local-first는 추론 우선 정책이며 hosted DB에 작품이 저장되는 경로를 숨기지 않는다. 정확한 Gemma 모델, 양자화, Backend, 성능 기준의 채택은 실측 이후 결정한다.
+사용자가 Next.js 화면 + FastAPI + PostgreSQL을 선택했다. 기존 Supabase·Node API·pgTAP 항목은 [변경 구현 지침](../../backend-implementation.md)의 owner 검증·실제 PostgreSQL transaction·pytest 검증으로 대체한다. 실제 GPU는 RTX 4060 Laptop이며 기본 모델의 최종 품질 판정은 보류한다.
 
 ## 계획 검토 기록
 
 - [x] 기술 방향서 §1~16을 읽고 아래 요구사항 추적표로 연결했다.
 - [x] v1의 프런트엔드 API 호출, 직접 DB 접근, 생성 페이지 누락, 수동 테스트 범위를 정적으로 확인했다.
 - [x] 주 계획의 stream·취소·Undo·재시도 계약을 읽고 모순 가능성을 검토 항목으로 등록했다.
-- [x] T01~T16과 B01~B05의 구현 완료 표시를 모두 미완료로 유지했다.
+- [x] 초기 계획 검토 시에는 구현 완료 표시를 미완료로 유지했으며, 아래 표는 후속 실행 증거로 갱신했다.
 - [x] 아래 계약 검토 항목의 수정 내용을 주 계획·벤치마크 계획과 최종 대조했다.
 - [x] 상대 링크 9개, code fence, JSON 예시, UTF-8, 작업 21개·요구사항 32개·방향서 §1~16 연결을 정적으로 점검했다.
 
@@ -31,27 +33,29 @@
 
 | 상태 | 작업 | 완료 시 남길 증거 | 현재 증거 |
 |---|---|---|---|
-| [ ] | T01 실행 골격·검증 명령 | runtime·lockfile, typecheck/lint/unit/build 결과 | 미실행 |
-| [ ] | T02 초기 DB·RLS·baseline | 빈 DB migration·seed, TAP 판정, 사용자 격리 결과 | 미실행 |
-| [ ] | T03 인증·작품 API | 401/403/404, 입력 상한, 모델 없는 CRUD 결과 | 미실행 |
-| [ ] | T04 Provider 계약·Fake | finish/empty/blocked/abort 계약 테스트 | 미실행 |
-| [ ] | T05 Context Builder | 필수 정보 보존·예산 초과·페이싱 테스트, ADR | 미실행 |
-| [ ] | T06 Story Memory 추출 | strict schema·인물 ID·불변 정보·추출 실패 테스트 | 미실행 |
-| [ ] | T07 예약·원자 commit·멱등성 | 동시 요청·rollback·재전송·epoch 회귀 결과 | 미실행 |
-| [ ] | T08 SSE·취소·상태 복구 | 실제 HTTP flush·socket 종료·취소 경합 결과 | 미실행 |
-| [ ] | T09 생성 UI·draft | UTF-8 parser, IME, 중복 클릭, reload E2E 결과 | 미실행 |
-| [ ] | T10 Ollama | NDJSON/usage 테스트와 명시적 Local smoke 결과 | 미실행 |
-| [ ] | T11 Timeout·Retry | fake timer, 첫 delta 이후 재생성 금지, deadline 결과 | 미실행 |
-| [ ] | T12 Gemini·Fallback | 동의 없는 외부 호출 0, 오류·전환 fixture 결과 | 미실행 |
-| [ ] | T13 작가 설정·완결·Undo | 첫 회차·에필로그·작가 수정 보존 DB/E2E 결과 | 미실행 |
-| [ ] | T14 지표·로그·운영 화면 | TTFT/TPS 정의 검증, secret sentinel, 사용자 격리 | 미실행 |
-| [ ] | T15 경계 통합·보안 회귀 | 전체 검증 결과와 실행 환경, 남은 수동 검증 한계 | 미실행 |
-| [ ] | T16 Docker·문서·공개 산출물 | image/compose/smoke, 실행 문서, 공개 자료 점검 | 미실행 |
-| [ ] | B01 후보·고정 입력 | 후보 설정 검증, 한국어 입력 세트·hash | 미실행 |
-| [ ] | B02 llama.cpp 비교 어댑터 | 공통 Provider 계약·분할 SSE fixture 결과 | 미실행 |
-| [ ] | B03 계측·하드웨어 수집 | 가짜 시간 검증, RAM/VRAM 표본·누락 표시 | 미실행 |
-| [ ] | B04 명시적 비교 CLI | run별 manifest·trial JSON·출력, Cloud 명시 실행 기록 | 미실행 |
-| [ ] | B05 통계·품질·모델 선택 | blind 품질표, 비교 보고서, 선택 ADR·채택 근거 | 미실행 |
+| [x] | T01 실행 골격·검증 명령 | runtime·lockfile, typecheck/lint/unit/build | Node24/Python3.13, 두 lockfile, 정적 검사·unit·build 통과. standalone 배포 한계 별도 기록 |
+| [x] | T02 초기 DB·소유권·baseline | 사용자 선택 구조의 실제 PG migration·격리 | PostgreSQL18.4 migration·owner·baseline·재연결 테스트 통과. RLS/pgTAP 대체 |
+| [x] | T03 인증·작품 API | 인증·입력 상한·모델 없는 CRUD | API fixture·실제 PG·로그인/로그아웃 E2E 통과 |
+| [x] | T04 Provider 계약·Fake | 공통 stream·오류·finish | Python Provider·benchmark fixture와 테스트 전용 HTTP upstream 통과 |
+| [x] | T05 Context Builder | 필수 보존·예산·페이싱 | 필수 초과 거절·wrapper bytes·페이싱 테스트 통과 |
+| [x] | T06 Story Memory 추출 | strict schema·ID·불변 정보·실패 | 생성 불변성·부분 필드 보존·실제 4B 상태 추출 통과 |
+| [x] | T07 예약·원자 commit·멱등성 | 동시 요청·rollback·재전송·epoch | 실제 PG 동시 예약·late failure rollback·epoch·취소 경합 통과 |
+| [x] | T08 SSE·취소·상태 복구 | native HTTP·상태 재조회 | native upstream chunk/cancel, production proxy E2E, AnyIO 반복 취소 회귀 통과 |
+| [ ] | T09 생성 UI·draft | 전체 UI·수동 입력 검증 | 구현 및 Chromium4개·UTF-8 parser7개 통과. 실제 IME·screen reader 수동 확인 미완료 |
+| [x] | T10 Ollama | NDJSON/usage·실제 Local smoke | 실제 Gemma4B 본문+상태+PG확정·재조회 통과 |
+| [x] | T11 Timeout·Retry | 최초·idle·전체·header·Retry-After | 각 timeout, 예산보다 긴 Retry-After 즉시 실패, 첫 delta 이후 재생성 금지 통과 |
+| [x] | T12 Gemini·Fallback | 요청 동의·전환 fixture | 동의 없는 호출 거절·fallback 실제 Provider 지표 테스트 통과. 실제 유료 호출은 별도 미완료 |
+| [x] | T13 작가 설정·완결·Undo | DB·화면 복구 | 설정 보존·baseline Undo·완결·보관 API/PG/E2E 통과 |
+| [x] | T14 지표·로그·운영 화면 | 시간 정의·민감정보·owner | helper·secret sentinel·실제 Provider 지표·운영 화면 구현 통과 |
+| [ ] | T15 경계 통합·보안 회귀 | 자동·수동 검증 범위 | Python96·TS7·Chromium4 통과. 장시간·다른 브라우저·접근성 수동 matrix 남음 |
+| [ ] | T16 Docker·문서·공개 산출물 | 이미지·compose·문서·운영 | README·Dockerfile·compose config 통과. 엔진 기동 실패로 container·백업 복원 훈련 미완료 |
+| [x] | B01 후보·고정 입력 | 후보·입력·hash | Q4 1B/4B·선택 Q8·Cloud 설정, 3개 한국어 사례·manifest hash |
+| [x] | B02 llama.cpp 비교 어댑터 | 공통 계약·fixture | 비교용 adapter·fixture 구현. 실제 동일 GGUF backend 비교는 별도 미완료 |
+| [x] | B03 계측·하드웨어 수집 | clock·VRAM·누락 표시 | 벤치 harness42개와 GPU 실측. 시스템 RAM counter unavailable=null 기록 |
+| [ ] | B04 명시적 비교 CLI | Local+Cloud 전체 실행 | 로컬36회와 raw/hash/manifest 완료. Cloud18회 미실행 |
+| [ ] | B05 통계·품질·모델 선택 | blind·선택 근거 | 집계·평가표 구현. 실제36회 모두 출력 제한 절단, 수동 점수 null, 기본 모델 채택 보류 |
+
+검증 명령·환경·자료는 [구현 결과](../../implementation-results.md)와 [벤치 결과](../../benchmark-results-2026-10-26.md)에 기록했다. `[x]`는 구조 변경 후 표에 명시한 구현·검증 범위이며 실제 Cloud·Docker·수동 품질 평가까지 통과했다는 뜻이 아니다.
 
 ## 요구사항 추적표
 
