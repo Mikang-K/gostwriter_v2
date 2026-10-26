@@ -279,3 +279,4 @@ Docker의 DB와 기본 로컬 실행의 DB는 별개이며 원고가 자동으�
 - [로컬 모델 실측 결과](docs/benchmark-results-2026-10-26.md)
 - [모델 비교 실행 방법](docs/benchmarks.md)
 - [시스템 구조 결정](docs/adr/0001-runtime-and-storage.md)
+- [개발 브랜치·PR·운영 통합 절차](docs/development-workflow.md)
