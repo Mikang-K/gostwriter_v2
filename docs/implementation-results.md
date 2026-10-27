@@ -2,6 +2,8 @@
 
 기준일: 2026-10-26. 사용자 선택에 따라 Next.js 화면 + FastAPI + PostgreSQL로 구현했다. [구조 결정](adr/0001-runtime-and-storage.md)이 기존 Supabase·Node API 계획을 대체한다.
 
+**2026-10-27 갱신:** 외부 Provider를 Gemini에서 GPT (OpenAI Responses API)로 변경했다. 실제 LLM 호출은 사용자 요청에 따라 보류했다. 백업 복원과 브라우저 검증의 최신 결과는 [후속 검증 기록](validation-2026-10-27.md)을 따른다. 아래 표는 2026-10-26 실행 기록이다.
+
 ## 구현된 사용 흐름
 
 - 운영자 암호 로그인·로그아웃, 서버 DB 세션과 owner 검증.

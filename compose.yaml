@@ -29,8 +29,8 @@ services:
       CONTEXT_WINDOW: ${CONTEXT_WINDOW:-8192}
       MAX_OUTPUT_TOKENS: ${MAX_OUTPUT_TOKENS:-1024}
       ENABLE_CLOUD: ${ENABLE_CLOUD:-false}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
     ports:
       - "127.0.0.1:8000:8000"
     extra_hosts:

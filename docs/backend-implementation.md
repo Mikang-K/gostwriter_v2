@@ -9,7 +9,7 @@
 | T01 | 루트 Next.js/React/TS/Vitest/Playwright. Python은 backend/pyproject.toml과 uv.lock. |
 | T02/T07/T13 저장 | backend/migrations/001_core.sql, backend/app/store.py. PostgreSQL transaction·FOR UPDATE·partial UNIQUE·epoch 검사. |
 | T03 인증/API | backend/app/main.py, config.py, models.py. 운영자 password 로그인, DB opaque sessions, owner 검증. |
-| T04/T10/T12 Provider | backend/app/providers.py. Python async iterator/httpx, 동일 delta/usage/finish 계약. Ollama/Gemini/비교용 llama.cpp. |
+| T04/T10/T12 Provider | backend/app/providers.py. Python async iterator/httpx, 동일 delta/usage/finish 계약. Ollama/GPT (OpenAI)/비교용 llama.cpp. |
 | T05/T06 | backend/app/context.py, memory.py. 필수 설정 보존·예산 초과 거절·strict metadata 검증. |
 | T07/T08/T11 | backend/app/generation.py. 예약 1회, SSE, 취소/연결 종료, deadline·제한 재시도, 동의 있는 fallback. |
 | T09 | src/app 및 src/features. Next route proxy가 /api를 FastAPI로 연결. 브라우저 계약은 camelCase JSON/SSE 유지. |

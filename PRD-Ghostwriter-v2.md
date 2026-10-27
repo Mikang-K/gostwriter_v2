@@ -88,7 +88,7 @@ Ghostwriter v2는 **본인이 소설을 쓰면서 로컬 LLM을 실험하는 도
 
 ### 7.3 구현 방향과 데이터 경로
 
-사용자가 확정한 구조는 **Next.js 화면 + Python FastAPI + PostgreSQL**이다. Next.js는 화면과 동일 출처 API proxy를 담당하며, FastAPI가 로그인·작품 CRUD·생성 orchestration·SSE·Memory·지표를 처리한다. PostgreSQL은 원고·이야기 기억·생성 요청·로그인 세션을 저장한다. Ollama가 기본 추론 서버이며 Gemini는 선택적 외부 모델이다. [구조 결정](docs/adr/0001-runtime-and-storage.md)과 [변경 구현 지침](docs/backend-implementation.md)이 기존 Node API·Supabase·TypeScript Provider 지침을 대체한다.
+사용자가 확정한 구조는 **Next.js 화면 + Python FastAPI + PostgreSQL**이다. Next.js는 화면과 동일 출처 API proxy를 담당하며, FastAPI가 로그인·작품 CRUD·생성 orchestration·SSE·Memory·지표를 처리한다. PostgreSQL은 원고·이야기 기억·생성 요청·로그인 세션을 저장한다. Ollama가 기본 추론 서버이며 GPT (OpenAI)는 선택적 외부 모델이다. [구조 결정](docs/adr/0001-runtime-and-storage.md)과 [변경 구현 지침](docs/backend-implementation.md)이 기존 Node API·Supabase·TypeScript Provider 지침을 대체한다.
 
 기본 실행은 호스트의 PostgreSQL 또는 compose의 PostgreSQL volume에 원고와 설정을 저장한다. Supabase나 hosted DB 계정은 필요하지 않다. 운영자가 외부 DB 주소를 지정하면 그 서버에 저장된다. 외부 LLM 사용에는 서버 활성화와 요청별 동의가 모두 필요하다. v1의 코드·데이터·배포는 보존한다. 현재 실행 절차와 백업 방법은 [README](README.md)를 따른다.
 

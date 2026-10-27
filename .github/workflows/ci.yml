@@ -66,11 +66,11 @@ jobs:
       - run: uv sync --project backend --locked
       - run: npm run lint
       - run: npm run test:unit
-      - run: uv run --project backend ruff check backend scripts/model-smoke.py
+      - run: uv run --project backend ruff check backend scripts/model-smoke.py scripts/backup-smoke.py
       - run: npm run test:integration
       - run: npm run build
       - run: npm run typecheck
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium firefox
       - name: Prepare isolated browser test settings
         run: |
           uv run --project backend python - <<'PY'

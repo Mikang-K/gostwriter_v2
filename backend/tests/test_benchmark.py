@@ -40,9 +40,9 @@ def test_fixed_config_cases_and_environment():
     assert [c["id"] for c in cases] == list(b.CASE_IDS)
     assert "[12" in cases[2]["messages"][1]["content"]
     cloud = config["candidates"][-1]
-    with pytest.raises(ValueError, match="GEMINI_MODEL"):
+    with pytest.raises(ValueError, match="OPENAI_MODEL"):
         b.resolve_model(cloud, {})
-    assert b.resolve_model(cloud, {"GEMINI_MODEL": " operator-model "}) == "operator-model"
+    assert b.resolve_model(cloud, {"OPENAI_MODEL": " operator-model "}) == "operator-model"
 
 
 @pytest.mark.parametrize("mutate", [
@@ -52,7 +52,7 @@ def test_fixed_config_cases_and_environment():
     lambda c: c["candidates"][0].update(baseUrl="http://malicious"),
     lambda c: c["candidates"][0].update(optional="yes"),
     lambda c: c["candidates"][0].update(id="../escape"),
-    lambda c: c["candidates"][0].update(modelEnv="GEMINI_MODEL"),
+    lambda c: c["candidates"][0].update(modelEnv="OPENAI_MODEL"),
     lambda c: c["candidates"][1].update(id="gemma-1b-q4"),
     lambda c: c["candidates"][-1].update(optional=True),
     lambda c: c["candidates"].pop(0),
@@ -186,7 +186,7 @@ def test_selection_requires_real_measurements_and_human_review():
 
 class FakeRuntime:
     def __init__(self):
-        self.env = {"GEMINI_MODEL": "fake-cloud"}
+        self.env = {"OPENAI_MODEL": "fake-cloud"}
         self.versions = {"ollama": "fake-version"}
         self.fake = FakeProvider()
         self.prepared = []
@@ -216,6 +216,8 @@ async def test_full_sequential_run_artifacts_and_blind_review(tmp_path):
     assert len(list((directory / "trials").glob("*/*/*.json"))) == 54
     manifest = b.read_json(directory / "manifest.json")
     assert manifest["comparisonScope"] == "local-and-cloud"
+    cloud_trial = b.read_json(next((directory / "trials/cloud-reference").glob("*/*.json")))
+    assert cloud_trial["seedApplied"] is False and cloud_trial["temperatureApplied"] is False
     assert manifest["casesSourceSha256"] == b.digest((b.ROOT / "benchmarks/cases.json").read_bytes())
     review = b.read_json(directory / "review.json")
     assert len(review["items"]) == 9
@@ -324,7 +326,7 @@ async def test_missing_cloud_model_fails_before_provider(tmp_path):
     config, cases = fixtures()
     runtime = FakeRuntime()
     runtime.env = {}
-    with pytest.raises(ValueError, match="GEMINI_MODEL"):
+    with pytest.raises(ValueError, match="OPENAI_MODEL"):
         await b.execute_benchmark(config, cases, tmp_path / "run", runtime, hardware=no_hardware)
     assert runtime.fake.calls == 0 and not (tmp_path / "run").exists()
 

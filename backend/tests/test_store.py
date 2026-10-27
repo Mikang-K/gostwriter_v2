@@ -212,7 +212,7 @@ async def test_metrics_provider_uses_execution_record_with_request_fallback(stor
     before = (await store.metrics(actor))[0]
     assert before["provider"] == "ollama" and before["metrics"] == {}
     await store.terminate(actor, generation, epoch, "failed", "TEST")
-    await store.record_metrics(actor, generation, epoch, {"provider": "gemini", "model": "fallback-model"})
+    await store.record_metrics(actor, generation, epoch, {"provider": "openai", "model": "fallback-model"})
     after = (await store.metrics(actor))[0]
-    assert after["provider"] == "gemini" and after["model"] == "fallback-model"
+    assert after["provider"] == "openai" and after["model"] == "fallback-model"
     assert after["provider"] == after["metrics"]["provider"]

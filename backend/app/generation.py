@@ -28,16 +28,16 @@ class Generations:
         if kind == "ollama":
             return Provider("ollama", self.settings.ollama_base_url,
                             header_timeout=self.settings.first_token_timeout), self.settings.ollama_model
-        if not (self.settings.enable_cloud and self.settings.gemini_api_key and self.settings.gemini_model):
+        if not (self.settings.enable_cloud and self.settings.openai_api_key and self.settings.openai_model):
             raise AppError("CLOUD_NOT_CONFIGURED", 503)
-        return Provider("gemini", api_key=self.settings.gemini_api_key,
-                        header_timeout=self.settings.first_token_timeout), self.settings.gemini_model
+        return Provider("openai", api_key=self.settings.openai_api_key,
+                        header_timeout=self.settings.first_token_timeout), self.settings.openai_model
 
     def targets(self, request):
         primary = self.factory(request.provider)
         fallback = None
         if request.provider == "ollama" and request.allow_cloud and self.settings.enable_cloud:
-            fallback = self.factory("gemini")
+            fallback = self.factory("openai")
         return primary, fallback
 
     async def _stream(self, inp, primary, fallback, attempts, task, deadline=None):

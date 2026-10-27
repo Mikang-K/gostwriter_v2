@@ -15,7 +15,7 @@ def test_cloud_consent_and_direction_bytes():
     base = dict(projectId="00000000-0000-4000-8000-000000000001", expectedRevision=0,
                 idempotencyKey="00000000-0000-4000-8000-000000000002", mode="initial")
     with pytest.raises(ValidationError):
-        GenerateRequest(**base, provider="gemini")
+        GenerateRequest(**base, provider="openai")
     with pytest.raises(ValidationError):
         GenerateRequest(**base, direction="가" * 683)
 

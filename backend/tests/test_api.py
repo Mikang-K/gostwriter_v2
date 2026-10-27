@@ -68,7 +68,7 @@ async def test_mutation_requires_exact_origin(api, origin):
 
 
 async def test_large_and_invalid_bodies_do_not_reflect_secrets(api):
-    marker = api.settings.gemini_api_key
+    marker = api.settings.openai_api_key
     for content, expected in [(marker + "x" * 65536, 413),
                               (json.dumps({"password": marker, "unexpected": marker}), 400)]:
         response = await api.client.post("/api/auth/login", content=content,
@@ -157,7 +157,7 @@ async def test_invalid_memory_leaves_complete_draft_and_finalize_can_recover(aut
 async def test_cloud_without_consent_rejected_before_provider_calls(authenticated):
     api = authenticated
     project = await new_project(api)
-    response = await api.client.post("/api/generations", json=command(project, provider="gemini"))
+    response = await api.client.post("/api/generations", json=command(project, provider="openai"))
     assert response.status_code == 400 and response.json()["error"]["code"] == "INVALID_INPUT"
     assert api.mock.calls == api.mock.targets == []
 

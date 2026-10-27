@@ -62,15 +62,15 @@ def parse_config(value):
         strict_object(candidate, {"id", "provider", "artifact"}, {"model", "modelEnv", "optional"})
         if not text(candidate["id"]) or not re.fullmatch(r"[a-zA-Z0-9_-]+", candidate["id"]):
             raise ValueError("Invalid candidate id")
-        if candidate["id"] in ids or candidate["provider"] not in {"ollama", "llamacpp", "gemini"}:
+        if candidate["id"] in ids or candidate["provider"] not in {"ollama", "llamacpp", "openai"}:
             raise ValueError("Duplicate candidate or invalid provider")
         ids.add(candidate["id"])
         if "optional" in candidate and type(candidate["optional"]) is not bool:
             raise ValueError("optional must be boolean")
         if ("model" in candidate) == ("modelEnv" in candidate):
             raise ValueError("Exactly one model source required")
-        if "modelEnv" in candidate and (candidate["modelEnv"] != "GEMINI_MODEL" or candidate["provider"] != "gemini"):
-            raise ValueError("Only GEMINI_MODEL is supported")
+        if "modelEnv" in candidate and (candidate["modelEnv"] != "OPENAI_MODEL" or candidate["provider"] != "openai"):
+            raise ValueError("Only OPENAI_MODEL is supported")
         if "model" in candidate and not text(candidate["model"]):
             raise ValueError("Invalid model")
         artifact = candidate["artifact"]
@@ -80,12 +80,12 @@ def parse_config(value):
                 raise ValueError("Invalid artifact identity")
             if key.endswith("Sha256") and entry is not None and not re.fullmatch(r"[a-fA-F0-9]{64}", entry):
                 raise ValueError("Invalid SHA-256")
-    local = [c for c in candidates if c["provider"] != "gemini"]
-    cloud = [c for c in candidates if c["provider"] == "gemini"]
+    local = [c for c in candidates if c["provider"] != "openai"]
+    cloud = [c for c in candidates if c["provider"] == "openai"]
     if not 2 <= len(local) <= 3 or len([c for c in local if not c.get("optional")]) < 2:
         raise ValueError("Two mandatory local candidates required; at most three local candidates")
-    if len(cloud) != 1 or cloud[0].get("optional") or cloud[0].get("modelEnv") != "GEMINI_MODEL":
-        raise ValueError("One mandatory GEMINI_MODEL cloud reference required")
+    if len(cloud) != 1 or cloud[0].get("optional") or cloud[0].get("modelEnv") != "OPENAI_MODEL":
+        raise ValueError("One mandatory OPENAI_MODEL cloud reference required")
     return value
 
 
@@ -448,7 +448,7 @@ class Runtime:
 
     def provider(self, candidate):
         return Provider(candidate["provider"], self.urls.get(candidate["provider"], ""),
-                        self.env.get("GEMINI_API_KEY", "") if candidate["provider"] == "gemini" else "")
+                        self.env.get("OPENAI_API_KEY", "") if candidate["provider"] == "openai" else "")
 
     async def preflight(self, candidates):
         async with httpx.AsyncClient(timeout=10) as client:
@@ -486,7 +486,7 @@ class Runtime:
                 pass
 
     async def prepare_cold(self, candidate):
-        if candidate["provider"] == "gemini":
+        if candidate["provider"] == "openai":
             return "provider-managed"
         if candidate["provider"] == "llamacpp":
             if sys.stdin.isatty():
@@ -510,7 +510,7 @@ async def execute_benchmark(config, cases, directory, runtime, *, local_only=Fal
                             include_optional=False, clock=lambda: time.monotonic() * 1000,
                             hardware=read_hardware):
     candidates = [{**c, "resolvedModel": resolve_model(c, runtime.env)} for c in config["candidates"]
-                  if (include_optional or not c.get("optional")) and (not local_only or c["provider"] != "gemini")]
+                  if (include_optional or not c.get("optional")) and (not local_only or c["provider"] != "openai")]
     await runtime.preflight(candidates)
     directory.mkdir(parents=True, exist_ok=False)
     source = (ROOT / "benchmarks/cases.json").read_bytes()
@@ -558,7 +558,8 @@ async def execute_benchmark(config, cases, directory, runtime, *, local_only=Fal
                          "provider": candidate["provider"], "model": candidate["resolvedModel"],
                          "phase": phase, "index": max(1, index), "coldState": cold_state if index == 0 else "warm",
                          "invariants": case["invariants"], "caseSha256": digest(encoded(case)),
-                         "generation": config["generation"], "seedApplied": candidate["provider"] != "gemini",
+                         "generation": config["generation"], "seedApplied": candidate["provider"] != "openai",
+                         "temperatureApplied": candidate["provider"] != "openai",
                          "contextWindowApplied": candidate["provider"] == "ollama", "startedUtc": started_utc,
                          "hardware": samples}
                 relative = "trials/" + trial_id + ".json"
@@ -610,13 +611,13 @@ async def async_main(args):
     directory = output_directory(args.output)
     config = parse_config(read_json(ROOT / args.config))
     cases = parse_cases(read_json(ROOT / "benchmarks/cases.json"))
-    if args.allow_cloud and not os.environ.get("GEMINI_API_KEY", "").strip():
-        raise ValueError("GEMINI_API_KEY required for explicit cloud run")
+    if args.allow_cloud and not os.environ.get("OPENAI_API_KEY", "").strip():
+        raise ValueError("OPENAI_API_KEY required for explicit cloud run")
     for c in config["candidates"]:
-        if (args.include_optional or not c.get("optional")) and (not args.local_only or c["provider"] != "gemini"):
+        if (args.include_optional or not c.get("optional")) and (not args.local_only or c["provider"] != "openai"):
             resolve_model(c, os.environ)
     selected = [c for c in config["candidates"] if (args.include_optional or not c.get("optional"))
-                and (not args.local_only or c["provider"] != "gemini")]
+                and (not args.local_only or c["provider"] != "openai")]
     print(json.dumps({"cases": list(CASE_IDS), "generation": GENERATION, "candidates": [c["id"] for c in selected],
                       "expectedRequests": len(selected) * 18, "cloudRequests": 18 if args.allow_cloud else 0,
                       "scope": "partial-local-only" if args.local_only else "local-and-cloud"}))

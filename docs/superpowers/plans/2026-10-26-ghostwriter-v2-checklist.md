@@ -1,5 +1,7 @@
 # Ghostwriter v2 구현 체크리스트
 
+> 2026-10-27: 사용자 요청으로 실제 LLM 호출·모델 비교를 보류한다. 이후 외부 모델은 Gemini 대신 GPT (OpenAI)를 사용한다. [후속 검증 기록](../../validation-2026-10-27.md)에 현재 실행 증거와 남은 조건을 기록한다. 과거 계획의 Gemini 표기는 당시 설계 기록이다.
+
 > **2026-10-26 구조 변경 및 상태 안내:** Next.js 화면 + Python FastAPI + PostgreSQL을 사용한다. [ADR 0001](../../adr/0001-runtime-and-storage.md), [변경 구현 지침](../../backend-implementation.md), [실행 문서](../../../README.md)가 아래 Node API·Supabase·pgTAP 관련 실행 가정을 대체한다. 현재 구현과 개별 검증은 진행 중이며 아래 원계획의 상세 작업·완료 표시는 보존한다. 실제 PostgreSQL 테스트, 모의 HTTP 테스트, 실제 모델·브라우저·Docker·Cloud·수동 품질 검증은 서로 대체하지 않으며 전체 계획 완료로 표시하지 않는다.
 
 작성일: 2026-10-26. 이 문서는 구현 진행과 검증 증거를 관리한다.
@@ -41,14 +43,14 @@
 | [x] | T06 Story Memory 추출 | strict schema·ID·불변 정보·실패 | 생성 불변성·부분 필드 보존·실제 4B 상태 추출 통과 |
 | [x] | T07 예약·원자 commit·멱등성 | 동시 요청·rollback·재전송·epoch | 실제 PG 동시 예약·late failure rollback·epoch·취소 경합 통과 |
 | [x] | T08 SSE·취소·상태 복구 | native HTTP·상태 재조회 | native upstream chunk/cancel, production proxy E2E, AnyIO 반복 취소 회귀 통과 |
-| [ ] | T09 생성 UI·draft | 전체 UI·수동 입력 검증 | 구현 및 Chromium4개·UTF-8 parser7개 통과. 실제 IME·screen reader 수동 확인 미완료 |
+| [ ] | T09 생성 UI·draft | 전체 UI·수동 입력 검증 | UI·UTF-8 parser 검증, Chromium·Firefox 및 키보드·GPT 동의 검증 추가. 실제 IME·screen reader 수동 확인 미완료 |
 | [x] | T10 Ollama | NDJSON/usage·실제 Local smoke | 실제 Gemma4B 본문+상태+PG확정·재조회 통과 |
 | [x] | T11 Timeout·Retry | 최초·idle·전체·header·Retry-After | 각 timeout, 예산보다 긴 Retry-After 즉시 실패, 첫 delta 이후 재생성 금지 통과 |
-| [x] | T12 Gemini·Fallback | 요청 동의·전환 fixture | 동의 없는 호출 거절·fallback 실제 Provider 지표 테스트 통과. 실제 유료 호출은 별도 미완료 |
+| [x] | T12 GPT·Fallback | 요청 동의·전환 fixture | OpenAI Responses API로 전환. 동의·fallback·usage·절단·refusal·실패 테스트 통과. 실제 호출은 사용자 요청으로 보류 |
 | [x] | T13 작가 설정·완결·Undo | DB·화면 복구 | 설정 보존·baseline Undo·완결·보관 API/PG/E2E 통과 |
 | [x] | T14 지표·로그·운영 화면 | 시간 정의·민감정보·owner | helper·secret sentinel·실제 Provider 지표·운영 화면 구현 통과 |
 | [ ] | T15 경계 통합·보안 회귀 | 자동·수동 검증 범위 | Python96·TS7·Chromium4 통과. 장시간·다른 브라우저·접근성 수동 matrix 남음 |
-| [ ] | T16 Docker·문서·공개 산출물 | 이미지·compose·문서·운영 | README·Dockerfile·compose config 통과. 엔진 기동 실패로 container·백업 복원 훈련 미완료 |
+| [ ] | T16 Docker·문서·공개 산출물 | 이미지·compose·문서·운영 | compose config·합성 원고 pg_dump/pg_restore 및 재조회 통과. Docker Desktop 엔진 기동 실패로 이미지·container 검증 미완료 |
 | [x] | B01 후보·고정 입력 | 후보·입력·hash | Q4 1B/4B·선택 Q8·Cloud 설정, 3개 한국어 사례·manifest hash |
 | [x] | B02 llama.cpp 비교 어댑터 | 공통 계약·fixture | 비교용 adapter·fixture 구현. 실제 동일 GGUF backend 비교는 별도 미완료 |
 | [x] | B03 계측·하드웨어 수집 | clock·VRAM·누락 표시 | 벤치 harness42개와 GPU 실측. 시스템 RAM counter unavailable=null 기록 |

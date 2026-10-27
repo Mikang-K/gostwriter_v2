@@ -10,7 +10,7 @@ backend/.venv/Scripts/python.exe -m app.benchmark --help
 backend/.venv/Scripts/python.exe -m app.benchmark --config benchmarks/candidates.json --output artifacts/benchmarks/local-20261026 --local-only
 ```
 
-`--local-only`는 Cloud를 호출하지 않는 **부분 비교**다. 전체 비교는 로컬 후보 두 개 이상과 Gemini 한 개가 필요하다. 선택 후보인 4b Q8까지 측정하려면 `--include-optional`을 추가한다. help와 review는 모델을 생성하지 않는다. import만으로도 실행되지 않는다.
+`--local-only`는 Cloud를 호출하지 않는 **부분 비교**다. 전체 비교는 로컬 후보 두 개 이상과 GPT (OpenAI) 한 개가 필요하다. 선택 후보인 4b Q8까지 측정하려면 `--include-optional`을 추가한다. help와 review는 모델을 생성하지 않는다. import만으로도 실행되지 않는다.
 
 ## 준비와 비용
 
@@ -22,7 +22,7 @@ Ollama 설치, 서버 실행, 모델 다운로드는 별도 수동 단계다. CL
 
 Ollama 기본 주소는 `http://127.0.0.1:11434`다. `OLLAMA_BASE_URL`로 loopback HTTP 주소만 바꿀 수 있다. 외부 주소, 사용자 정보, query와 JSON 내 URL/실행 명령은 허용하지 않는다. 앱 DB, v1 데이터, Supabase는 사용하지 않는다.
 
-Cloud를 포함하려면 실행 환경에 `GEMINI_MODEL`, `GEMINI_API_KEY`를 설정하고 `--allow-cloud`를 명시한다. `.env.local`은 자동으로 읽지 않는다. 모델은 운영자가 지정하며 키를 명령 인자나 출력물에 기록하지 않는다.
+Cloud를 포함하려면 실행 환경에 `OPENAI_MODEL`, `OPENAI_API_KEY`를 설정하고 `--allow-cloud`를 명시한다. `.env.local`은 자동으로 읽지 않는다. 모델은 운영자가 지정하며 키를 명령 인자나 출력물에 기록하지 않는다.
 
 ```powershell
 backend/.venv/Scripts/python.exe -m app.benchmark --config benchmarks/candidates.json --output artifacts/benchmarks/full-20261026 --allow-cloud
@@ -32,7 +32,7 @@ backend/.venv/Scripts/python.exe -m app.benchmark --config benchmarks/candidates
 
 ## 측정 조건
 
-초기 생성, 이어쓰기, 장기 기억의 고정 한국어 사례별로 cold 1회 후 warm 5회를 직렬 실행한다. 최대 출력 512 tokens, temperature 0.7, contextWindow 8192, seed 42, timeout 120초를 고정한다. Gemini의 contextWindow는 입력 예산 의미이며 서버 설정을 바꾸지 않는다. Gemini는 seed 미적용으로 기록한다. seed 적용도 출력 재현성을 보장하지 않는다.
+초기 생성, 이어쓰기, 장기 기억의 고정 한국어 사례별로 cold 1회 후 warm 5회를 직렬 실행한다. 로컬 후보는 최대 출력 512 tokens, temperature 0.7, contextWindow 8192, seed 42, timeout 120초를 고정한다. GPT (OpenAI)의 contextWindow는 입력 예산 의미이며 서버 설정을 바꾸지 않는다. GPT (OpenAI)는 모델별 지원 차이를 고려해 seed·temperature를 보내지 않고 `seedApplied=false`, `temperatureApplied=false`로 기록한다. 로컬 후보와 동일 sampling 조건으로 해석하지 않는다. seed 적용도 출력 재현성을 보장하지 않는다.
 
 Ollama cold 직전에 `POST /api/generate`의 `keep_alive:0` 완료와 `/api/ps`에서 모델 부재를 확인한다. 실패하면 해당 사례의 여섯 trial은 호출하지 않고 실패로 남긴다. 다른 사례는 계속한다. Cloud 첫 요청은 `provider-managed`이며 하드웨어 cold 근거가 아니다.
 

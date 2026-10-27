@@ -18,7 +18,7 @@ Ghostwriter는 AI와 함께 소설을 쓰는 개인 작업실입니다. 작품�
 | uv와 Python 3.13 | 글 생성·저장 기능 실행 |
 | Ollama | 내 PC에서 AI 모델 실행 |
 
-기본 사용에는 외부 DB 계정이나 Gemini API 키가 필요하지 않습니다. 모델을 내려받고 프로그램을 설치할 때는 인터넷 연결이 필요합니다.
+기본 사용에는 외부 DB 계정이나 GPT (OpenAI) API 키가 필요하지 않습니다. 모델을 내려받고 프로그램을 설치할 때는 인터넷 연결이 필요합니다.
 
 ### 프로그램 파일과 모델 준비
 
@@ -201,7 +201,7 @@ createdb --host=127.0.0.1 --port=55432 --username=ghostwriter --password ghostwr
 pg_restore --host=127.0.0.1 --port=55432 --username=ghostwriter --password --dbname=ghostwriter_restore --no-owner ghostwriter-backup.dump
 ```
 
-복원 후 `backend/.env.local`의 `DATABASE_URL`이 복원한 DB를 가리키도록 설정하고 터미널 B를 다시 실행합니다. 작품과 회차가 보이는지 확인하세요. 백업 복원 절차의 실제 운영 검증은 아직 완료하지 않았습니다.
+복원 후 `backend/.env.local`의 `DATABASE_URL`이 복원한 DB를 가리키도록 설정하고 터미널 B를 다시 실행합니다. 작품과 회차가 보이는지 확인하세요. 합성 원고를 사용한 백업·빈 DB 복원·재조회는 검증했습니다. 본인의 실제 원고와 별도 서버를 사용한 운영 검증은 아직 남아 있습니다. [검증 결과와 시험 명령](docs/validation-2026-10-27.md)을 참고하세요.
 
 </details>
 
@@ -226,19 +226,21 @@ pg_restore --host=127.0.0.1 --port=55432 --username=ghostwriter --password --dbn
 ## 9. 선택 기능과 참고 문서
 
 <details>
-<summary>Gemini 등 외부 모델 사용하기</summary>
+<summary>GPT (OpenAI) 등 외부 모델 사용하기</summary>
 
-기본값은 외부 모델 사용 안 함입니다. Gemini를 사용하려면 `backend/.env.local`에 아래 값을 설정하고 터미널 B를 다시 실행합니다.
+현재 작업 범위에서는 실제 LLM API 호출과 모델 비교를 보류합니다. 기본값은 외부 모델 사용 안 함입니다. 추후 GPT (OpenAI)를 사용하려면 `backend/.env.local`에 아래 값을 설정하고 터미널 B를 다시 실행합니다.
 
 ```dotenv
 ENABLE_CLOUD=true
-GEMINI_MODEL=사용할_모델명
-GEMINI_API_KEY=발급받은_API_키
+OPENAI_MODEL=사용할_모델명
+OPENAI_API_KEY=발급받은_API_키
 ```
 
-화면에서 **생성 모델 → Gemini**를 선택하고 **이번 요청의 외부 모델 사용 허용**을 체크합니다. 허용은 요청마다 다시 선택합니다. 로컬 모델을 선택한 상태에서 허용하면 로컬 생성이 시작되기 전 실패했을 때 외부 모델로 전환될 수도 있습니다.
+Responses API의 스트리밍과 JSON Schema 출력을 지원하는 GPT 모델명을 직접 지정합니다. 기존 `GEMINI_MODEL`, `GEMINI_API_KEY` 설정은 사용하지 않습니다. 저장된 작품·회차는 유지됩니다.
 
-허용한 요청에서는 작품 설정·인물·최근 원문·요약·전개 방향·생성 본문이 생성 또는 상태 정리를 위해 외부로 전송될 수 있으며 비용이 발생할 수 있습니다. 첫 본문이 나온 뒤 실패한 경우에는 다른 모델의 글로 이어 붙이지 않습니다. 실제 Gemini 호출 검증은 아직 완료하지 않았습니다.
+화면에서 **생성 모델 → GPT (OpenAI)**를 선택하고 **이번 요청의 외부 모델 사용 허용**을 체크합니다. 허용은 요청마다 다시 선택합니다. 로컬 모델을 선택한 상태에서 허용하면 로컬 생성이 시작되기 전 실패했을 때 외부 모델로 전환될 수도 있습니다.
+
+허용한 요청에서는 작품 설정·인물·최근 원문·요약·전개 방향·생성 본문이 생성 또는 상태 정리를 위해 외부로 전송될 수 있으며 비용이 발생할 수 있습니다. 첫 본문이 나온 뒤 실패한 경우에는 다른 모델의 글로 이어 붙이지 않습니다. 실제 GPT (OpenAI) 호출 검증은 아직 완료하지 않았습니다.
 
 </details>
 

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Literal
-from urllib.parse import quote, urlparse
+from urllib.parse import urlparse
 
 import httpx
 
@@ -27,7 +27,7 @@ class GenerateInput:
 
 
 class Provider:
-    def __init__(self, kind: Literal["ollama", "gemini", "llamacpp"], base_url: str = "",
+    def __init__(self, kind: Literal["ollama", "openai", "llamacpp"], base_url: str = "",
                  api_key: str = "", client: httpx.AsyncClient | None = None,
                  header_timeout: float | None = None):
         self.id = kind
@@ -35,7 +35,7 @@ class Provider:
         self.api_key = api_key
         self.client = client
         self.header_timeout = HEADER_TIMEOUT if header_timeout is None else header_timeout
-        if kind != "gemini":
+        if kind != "openai":
             url = urlparse(base_url)
             if url.scheme != "http" or url.hostname not in {
                 "localhost", "127.0.0.1", "::1", "host.docker.internal", "ollama"
@@ -57,23 +57,17 @@ class Provider:
             if inp.response_schema:
                 payload["format"] = inp.response_schema
             headers = {}
-        elif self.id == "gemini":
+        elif self.id == "openai":
             if not self.api_key:
                 raise AppError("CLOUD_NOT_CONFIGURED", 503)
-            url = "https://generativelanguage.googleapis.com/v1beta/models/" + quote(inp.model, safe="")
-            url += ":streamGenerateContent?alt=sse"
-            system = "\n".join(m["content"] for m in inp.messages if m["role"] == "system")
-            payload = {"contents": [{"role": "model" if m["role"] == "assistant" else "user",
-                                     "parts": [{"text": m["content"]}]}
-                                    for m in inp.messages if m["role"] != "system"],
-                       "generationConfig": {"maxOutputTokens": inp.max_output_tokens,
-                                            "temperature": inp.temperature}}
-            if system:
-                payload["systemInstruction"] = {"parts": [{"text": system}]}
+            url = "https://api.openai.com/v1/responses"
+            payload = {"model": inp.model, "input": inp.messages, "stream": True,
+                       "store": False, "max_output_tokens": inp.max_output_tokens}
             if inp.response_schema:
-                payload["generationConfig"].update(responseMimeType="application/json",
-                                                   responseJsonSchema=inp.response_schema)
-            headers = {"x-goog-api-key": self.api_key}
+                # Partial memory updates preserve omitted fields; validate with Pydantic after extraction.
+                payload["text"] = {"format": {"type": "json_schema", "name": "story_memory",
+                                              "schema": inp.response_schema, "strict": False}}
+            headers = {"Authorization": "Bearer " + self.api_key}
         else:
             if inp.response_schema:
                 raise AppError("UNSUPPORTED_SCHEMA")
@@ -109,20 +103,23 @@ class Provider:
                                  "completionTokens": data.get("eval_count"),
                                  "decodeMs": ns_to_ms(data.get("eval_duration")),
                                  "loadMs": ns_to_ms(data.get("load_duration"))}
-                elif self.id == "gemini":
-                    candidates = data.get("candidates", [])
-                    candidate = candidates[0] if candidates else {}
-                    text = "".join(part.get("text", "") for part in
-                                   candidate.get("content", {}).get("parts", []) if not part.get("thought"))
-                    reason = candidate.get("finishReason")
-                    if reason:
-                        finish = {"STOP": "stop", "MAX_TOKENS": "length"}.get(reason, "blocked")
-                    if data.get("promptFeedback", {}).get("blockReason"):
+                elif self.id == "openai":
+                    event = data.get("type")
+                    text = data.get("delta", "") if event == "response.output_text.delta" else ""
+                    if event in {"error", "response.failed"}:
+                        raise AppError("INVALID_OUTPUT", 502)
+                    if event in {"response.refusal.delta", "response.refusal.done"}:
                         finish = "blocked"
-                    if "usageMetadata" in data:
-                        m = data["usageMetadata"]
-                        usage = {"type": "usage", "promptTokens": m.get("promptTokenCount"),
-                                 "completionTokens": m.get("candidatesTokenCount"),
+                    if event in {"response.completed", "response.incomplete"}:
+                        result = data["response"]
+                        if event == "response.incomplete":
+                            reason = (result.get("incomplete_details") or {}).get("reason")
+                            finish = "length" if reason == "max_output_tokens" else "blocked"
+                        elif finish != "blocked":
+                            finish = "stop"
+                        m = result.get("usage") or {}
+                        usage = {"type": "usage", "promptTokens": m.get("input_tokens"),
+                                 "completionTokens": m.get("output_tokens"),
                                  "decodeMs": None, "loadMs": None}
                 else:
                     choices = data.get("choices", [])

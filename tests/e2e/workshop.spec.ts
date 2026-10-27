@@ -38,9 +38,9 @@ test("login, streamed commit, reload, undo, completion and archive", async ({ pa
   await page.getByRole("button", { name: "생성 없이 완결" }).click();
   await expect(page.getByRole("button", { name: "다음 회차 생성" })).toBeDisabled();
   await mkdir("artifacts/screenshots", { recursive: true });
-  await page.screenshot({ path: "artifacts/screenshots/workshop-desktop.png", fullPage: true });
+  await page.screenshot({ path: `artifacts/screenshots/workshop-${test.info().project.name}-desktop.png`, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  await writeFile("artifacts/screenshots/workshop-mobile.png", await page.screenshot({ fullPage: true }), { flush: true });
+  await writeFile(`artifacts/screenshots/workshop-${test.info().project.name}-mobile.png`, await page.screenshot({ fullPage: true }), { flush: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole("button", { name: "작품 보관", exact: true }).click();
   await expect(page.getByRole("button", { name: "보관 해제" })).toBeVisible();
@@ -90,4 +90,34 @@ test("reload during streaming reuses the saved request", async ({ page, request 
   await expect(page.getByRole("status")).toHaveText(/생성 중단|원고 저장 완료|생성이 중단/, { timeout: 20000 });
   const after = await (await request.get("http://127.0.0.1:11435/stats")).json();
   expect(after.narrativeCalls - before.narrativeCalls).toBe(1);
+});
+
+test("keyboard login and GPT consent gate need no model call", async ({ page, request }) => {
+  await page.goto("/auth");
+  const password = page.getByLabel("작업실 암호");
+  await password.focus();
+  await page.keyboard.insertText(process.env.APP_PASSWORD!);
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "작업실 열기" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/projects$/);
+  await page.goto("/projects/new");
+  await page.getByLabel("작품 제목").focus();
+  await page.keyboard.insertText(`한글 입력 확인 ${Date.now()}`);
+  await page.getByRole("button", { name: "작품 만들기" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("한글 입력 확인");
+  const before = await (await request.get("http://127.0.0.1:11435/stats")).json();
+  await page.getByLabel("생성 모델").selectOption("openai");
+  await expect(page.getByRole("option", { name: "GPT (OpenAI)", exact: true })).toHaveValue("openai");
+  const generate = page.getByRole("button", { name: "첫 회차 생성" });
+  await expect(generate).toBeDisabled();
+  const consent = page.getByRole("checkbox", { name: "이번 요청의 외부 모델 사용 허용" });
+  await consent.focus();
+  await page.keyboard.press("Space");
+  await expect(generate).toBeEnabled();
+  await page.keyboard.press("Space");
+  await expect(generate).toBeDisabled();
+  const after = await (await request.get("http://127.0.0.1:11435/stats")).json();
+  expect(after.calls).toBe(before.calls);
 });
