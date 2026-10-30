@@ -133,7 +133,7 @@ export default function StoryPage({ params }: { params: Promise<{ id: string }> 
       {(draft || busy) && <article className="panel draft"><p className="eyebrow">미확정 초안</p><div className="prose">{draft || "첫 문장을 기다리고 있습니다…"}</div></article>}
       <section className="panel stack"><div className="section-head"><h2>다음 장면</h2><span role="status" aria-live="polite" className="muted">{labels[status] || status}</span></div>
         {model && <p className="muted">{model}</p>}
-        <label>전개 방향<textarea rows={4} value={direction} disabled={busy} onChange={e => setDirection(e.target.value)} placeholder="이번 회차에 어떤 일이 일어나길 바라나요?" /></label>
+        <label>전개 방향<textarea rows={4} value={direction} disabled={busy} onChange={e => setDirection(e.target.value)} placeholder="예: 하린이 동료의 거짓말을 눈치챈다. 하린의 시점으로 행동과 대사를 중심으로 쓰고, 추궁하기 직전에 끝낸다. 400자 내외." /></label>
         {!busy && project.memory.nextOptions.map((option, i) => <button className="suggestion" key={i} onClick={() => setDirection(option)}>{option}</button>)}
         <div className="row"><label>생성 모델<select disabled={busy} value={provider} onChange={e => setProvider(e.target.value as "ollama"|"openai")}><option value="ollama">로컬 모델</option><option value="openai">GPT (OpenAI)</option></select></label>
           <label className="check"><input type="checkbox" checked={allowCloud} disabled={busy} onChange={e => setAllowCloud(e.target.checked)} />이번 요청의 외부 모델 사용 허용</label></div>
