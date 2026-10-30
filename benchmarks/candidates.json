@@ -45,8 +45,8 @@
     },
     {
       "id": "cloud-reference",
-      "provider": "gemini",
-      "modelEnv": "GEMINI_MODEL",
+      "provider": "openai",
+      "modelEnv": "OPENAI_MODEL",
       "artifact": {
         "ggufSha256": null,
         "quantization": null,

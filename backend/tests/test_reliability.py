@@ -10,10 +10,10 @@ from app.providers import GenerateInput
 
 def test_provider_header_budget_matches_configured_first_token_timeout():
     settings = Settings(_env_file=None, first_token_timeout=95, enable_cloud=True,
-                        gemini_api_key="test-key", gemini_model="test-model")
+                        openai_api_key="test-key", openai_model="test-model")
     engine = Generations(None, settings)
     assert engine._provider("ollama")[0].header_timeout == 95
-    assert engine._provider("gemini")[0].header_timeout == 95
+    assert engine._provider("openai")[0].header_timeout == 95
 
 
 async def test_retry_after_exceeding_remaining_budget_fails_without_second_call():

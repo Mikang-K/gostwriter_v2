@@ -76,23 +76,23 @@ async def test_failure_before_token_retries_once_and_commits(store, settings, me
 async def test_consent_allows_cloud_only_after_two_local_failures(store, settings, memory_update):
     settings.enable_cloud = True
     local = ScriptedProvider([[AppError("UNAVAILABLE", 502, True)]] * 2)
-    cloud = ScriptedProvider([completed("클라우드 본문"), completed(json.dumps(memory_update))], "gemini")
+    cloud = ScriptedProvider([completed("클라우드 본문"), completed(json.dumps(memory_update))], "openai")
     engine, _, request, reservation, targets = await job(store, settings, local, cloud=cloud, consent=True)
     records = await run(engine, settings, request, reservation)
     assert records[-1]["status"] == "succeeded"
-    assert len(local.calls) == 2 and len(cloud.calls) == 2 and "gemini" in targets
+    assert len(local.calls) == 2 and len(cloud.calls) == 2 and "openai" in targets
     saved = await store.generation(settings.owner_id, reservation["generationId"])
-    assert saved["metrics"]["provider"] == "gemini"
+    assert saved["metrics"]["provider"] == "openai"
     assert [attempt["provider"] for attempt in saved["metrics"]["attempts"]] == [
-        "ollama", "ollama", "gemini", "gemini"]
+        "ollama", "ollama", "openai", "openai"]
     metrics = await store.metrics(settings.owner_id)
-    assert metrics[0]["provider"] == metrics[0]["metrics"]["provider"] == "gemini"
+    assert metrics[0]["provider"] == metrics[0]["metrics"]["provider"] == "openai"
 
 
 async def test_no_consent_prevents_cloud_even_when_local_fails(store, settings):
     settings.enable_cloud = True
     local = ScriptedProvider([[AppError("UNAVAILABLE", 502, True)]] * 2)
-    cloud = ScriptedProvider([], "gemini")
+    cloud = ScriptedProvider([], "openai")
     engine, before, request, reservation, targets = await job(store, settings, local, cloud=cloud)
     records = await run(engine, settings, request, reservation)
     assert records[-1]["status"] == "failed"
@@ -103,7 +103,7 @@ async def test_no_consent_prevents_cloud_even_when_local_fails(store, settings):
 async def test_failure_after_token_never_retries_or_falls_back(store, settings):
     settings.enable_cloud = True
     local = ScriptedProvider([[{"type": "delta", "text": "일부 본문"}, AppError("UNAVAILABLE", 502, True)]])
-    cloud = ScriptedProvider([], "gemini")
+    cloud = ScriptedProvider([], "openai")
     engine, before, request, reservation, _ = await job(store, settings, local, cloud=cloud, consent=True)
     records = await run(engine, settings, request, reservation)
     assert next(event for event in records if event["type"] == "error")["draftAvailable"] is True

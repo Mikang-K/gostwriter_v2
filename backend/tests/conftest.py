@@ -39,7 +39,7 @@ async def store():
 def settings():
     return Settings(_env_file=None, database_url="", app_password="test-password-private-marker",
                     owner_id=str(uuid4()), app_origin="http://localhost:3000",
-                    gemini_api_key="test-key-private-marker", gemini_model="test-cloud",
+                    openai_api_key="test-key-private-marker", openai_model="test-cloud",
                     enable_cloud=False, context_window=8192, max_output_tokens=256)
 
 

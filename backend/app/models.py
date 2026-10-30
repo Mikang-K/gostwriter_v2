@@ -69,7 +69,7 @@ class GenerateRequest(Model):
     idempotency_key: UUID
     mode: Literal["initial", "continue", "epilogue"]
     direction: str = ""
-    provider: Literal["ollama", "gemini"] = "ollama"
+    provider: Literal["ollama", "openai"] = "ollama"
     allow_cloud: bool = False
 
     @field_validator("direction")
@@ -79,7 +79,7 @@ class GenerateRequest(Model):
 
     @model_validator(mode="after")
     def consent(self):
-        if self.provider == "gemini" and not self.allow_cloud:
+        if self.provider == "openai" and not self.allow_cloud:
             raise ValueError("Cloud consent is required")
         return self
 

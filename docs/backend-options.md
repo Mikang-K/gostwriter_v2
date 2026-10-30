@@ -25,7 +25,7 @@ SQLite를 먼저 권장했던 문서는 선택 전 검토였다. 현재 구현 �
   → FastAPI 127.0.0.1:8000
       → PostgreSQL: 원고·이야기 기억·생성 요청·로그인 세션
       → Ollama: 기본 로컬 생성·구조화 기억 추출
-      → Gemini: 서버 활성화 + 요청별 동의가 있는 요청만
+      → GPT (OpenAI): 서버 활성화 + 요청별 동의가 있는 요청만
 ```
 
 - Next.js는 UI와 API proxy를 담당한다. 인증·CRUD·생성 orchestration·SSE·Memory·지표는 FastAPI가 담당한다.

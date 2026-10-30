@@ -5,7 +5,7 @@ import { api, message, type Snapshot } from "@/features/stories/api";
 import ProjectForm from "@/features/stories/ProjectForm";
 
 type RequestInput = { projectId: string; expectedRevision: number; idempotencyKey: string;
-  mode: "initial"|"continue"|"epilogue"; direction: string; provider: "ollama"|"gemini"; allowCloud: boolean };
+  mode: "initial"|"continue"|"epilogue"; direction: string; provider: "ollama"|"openai"; allowCloud: boolean };
 type Saved = { generationId: string; status: string; draftBody: string; draftComplete: boolean;
   errorCode: string|null; undoneAt: string|null };
 const terminal = new Set(["succeeded", "failed", "cancelled", "interrupted"]);
@@ -14,7 +14,7 @@ export default function StoryPage({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const [project, setProject] = useState<Snapshot|null>(null), [error, setError] = useState("");
   const [direction, setDirection] = useState(""), [draft, setDraft] = useState("");
-  const [provider, setProvider] = useState<"ollama"|"gemini">("ollama"), [allowCloud, setAllowCloud] = useState(false);
+  const [provider, setProvider] = useState<"ollama"|"openai">("ollama"), [allowCloud, setAllowCloud] = useState(false);
   const [status, setStatus] = useState("idle"), [busy, setBusy] = useState(false), [model, setModel] = useState("");
   const [selected, setSelected] = useState<string|null>(null), [body, setBody] = useState("");
   const [saved, setSaved] = useState<Saved|null>(null), [visibleGid, setVisibleGid] = useState<string|null>(null);
@@ -133,12 +133,12 @@ export default function StoryPage({ params }: { params: Promise<{ id: string }> 
       {(draft || busy) && <article className="panel draft"><p className="eyebrow">미확정 초안</p><div className="prose">{draft || "첫 문장을 기다리고 있습니다…"}</div></article>}
       <section className="panel stack"><div className="section-head"><h2>다음 장면</h2><span role="status" aria-live="polite" className="muted">{labels[status] || status}</span></div>
         {model && <p className="muted">{model}</p>}
-        <label>전개 방향<textarea rows={4} value={direction} disabled={busy} onChange={e => setDirection(e.target.value)} placeholder="이번 회차에 어떤 일이 일어나길 바라나요?" /></label>
+        <label>전개 방향<textarea rows={4} value={direction} disabled={busy} onChange={e => setDirection(e.target.value)} placeholder="예: 하린이 동료의 거짓말을 눈치챈다. 하린의 시점으로 행동과 대사를 중심으로 쓰고, 추궁하기 직전에 끝낸다. 400자 내외." /></label>
         {!busy && project.memory.nextOptions.map((option, i) => <button className="suggestion" key={i} onClick={() => setDirection(option)}>{option}</button>)}
-        <div className="row"><label>생성 모델<select disabled={busy} value={provider} onChange={e => setProvider(e.target.value as "ollama"|"gemini")}><option value="ollama">로컬 모델</option><option value="gemini">Gemini</option></select></label>
+        <div className="row"><label>생성 모델<select disabled={busy} value={provider} onChange={e => setProvider(e.target.value as "ollama"|"openai")}><option value="ollama">로컬 모델</option><option value="openai">GPT (OpenAI)</option></select></label>
           <label className="check"><input type="checkbox" checked={allowCloud} disabled={busy} onChange={e => setAllowCloud(e.target.checked)} />이번 요청의 외부 모델 사용 허용</label></div>
         <p className="notice">외부 모델 사용을 허용하면 작품 설정·인물·최근 원문·요약·지시·생성 본문이 생성 또는 상태 정리를 위해 전송될 수 있습니다. 비용이 발생할 수 있습니다. 원고는 연결한 PostgreSQL에 저장됩니다.</p>
-        <div className="actions"><button disabled={busy || project.memory.isFinished || project.archived || (provider === "gemini" && !allowCloud)} onClick={() => void generate(project.episodes.length ? "continue" : "initial")}>{project.episodes.length ? "다음 회차 생성" : "첫 회차 생성"}</button>
+        <div className="actions"><button disabled={busy || project.memory.isFinished || project.archived || (provider === "openai" && !allowCloud)} onClick={() => void generate(project.episodes.length ? "continue" : "initial")}>{project.episodes.length ? "다음 회차 생성" : "첫 회차 생성"}</button>
           {project.episodes.length > 0 && !project.memory.isFinished && <button className="secondary" disabled={busy} onClick={() => void generate("epilogue")}>에필로그 생성</button>}
           {busy && <button className="danger" disabled={!visibleGid} onClick={() => void cancel()}>생성 중단</button>}
           {saved?.draftComplete && ["failed", "interrupted"].includes(saved.status) && <button className="secondary" disabled={busy} onClick={() => void finalize()}>상태 저장 재시도</button>}

@@ -34,7 +34,7 @@ PR의 변경 범위와 테스트를 확인하고 CI가 통과한 뒤 merge한다
 
 ## 자동 검증과 보호 규칙
 
-`.github/workflows/ci.yml`은 `develop` push와 `develop`·`main` 대상 PR에서 `validate`를 실행한다. Node24·Python3.13·실제 PostgreSQL18을 사용해 lint, unit, Python 통합 테스트, production build, typecheck, Chromium E2E를 검사한다. 모델 호출은 테스트 전용 upstream을 사용하며 실제 GPU·유료 Cloud 성능을 검증하지 않는다.
+`.github/workflows/ci.yml`은 `develop` push와 `develop`·`main` 대상 PR에서 `validate`를 실행한다. Node24·Python3.13·실제 PostgreSQL18을 사용해 lint, unit, Python 통합 테스트, production build, typecheck, Chromium·Firefox E2E를 검사한다. 브라우저별 API와 owner를 분리해 순차 실행한다. 모델 호출은 테스트 전용 upstream을 사용하며 실제 GPU·유료 Cloud 성능을 검증하지 않는다.
 
 `main`과 `develop`은 PR 및 최신 기준의 `validate` 통과를 요구하고, force push·브랜치 삭제를 차단한다. 개인 저장소에서 혼자 작업할 수 있도록 필수 승인 인원은 0명이며 PR의 변경 검토와 release checklist는 직접 수행한다. 관리자에게도 같은 보호 규칙을 적용한다.
 
@@ -48,4 +48,4 @@ PR의 변경 범위와 테스트를 확인하고 CI가 통과한 뒤 merge한다
 4. 통합된 커밋을 기준으로 릴리스 버전과 배포 기록을 남긴다. 배포는 별도 작업이다.
 5. 다음 개발 주기 전 `main → develop` 동기화 PR로 릴리스 merge 이력을 반영해 양쪽 이력을 연결한다.
 
-운영 검증이 끝나지 않은 구현을 브랜치 이름만 바꿔 `main`에 올리지 않는다. 현재는 Docker 기동·백업 복원·수동 모델 품질 등 미완료 조건을 유지한다.
+운영 검증이 끝나지 않은 구현을 브랜치 이름만 바꿔 `main`에 올리지 않는다. 합성 원고의 백업 복원은 검증했으며, Docker 기동·실제 IME·스크린리더·장시간 사용 등 남은 조건은 [최신 검증 기록](validation-2026-10-27.md)을 따른다. 실제 LLM 호출·모델 품질 비교는 사용자 요청으로 보류한다.
